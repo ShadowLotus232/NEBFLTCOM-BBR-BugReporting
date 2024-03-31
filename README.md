@@ -13,10 +13,14 @@ Issue-only repository for reporting bugs in the Better Battle Report mod for Neb
   - Records the terrain of *most* modded maps. It has been tested on most maps available at time of writing. New maps will be tested as released, and issues fixed as they arise.
   - Calculates the score at any given time based on the rules of the scenario (CTF and Station Capture are not implemented, and are very low priority as their scoring is much easier to intuit).
   - .bbr files will be exported to the same place as base game battle reports (`..\Steam\steamapps\common\Nebulous\Saves\SkirmishReports`) with the same name as the associated battle report by clicking the 'Export Battle Report' button in the debriefing lobby.
-  - Provides a C# method for dedicated servers to write reports to specific places:
+  - Provides C# methods for dedicated servers to interact with report data:
     - `void BBRMod.BBRMod.DedicatedServerExport(string fileName, string filePath = null, bool debug = false)` will write the .bbr file of the most recent game to the specified place with the specified name. If `filePath` is passed as null it will save to the default skirmish report location. If `debug` is passed as true BBR will also output an uncompressed .json file that contains the same information as the .bbr file. It is helpful for debugging if there is an issue, or for reading the data raw if you so wish to do so, but it will be 4-8 times larger on average.
     - If your server already saves battle reports by calling `Game.Reports.FullAfterActionReport.Export(string filename)` then .bbr files will automatically be written to the same place with the same filename.
-    - `bool BBRMod.BBRMod.IsWritingReport()` can be used to check if the server is in the process of writing the report file. 
+    - `bool BBRMod.BBRMod.IsWritingReport()` can be used to check if the server is in the process of serializing/writing the report file. 
+    - `bool BBRMod.BBRMod.IsReportReady()` will return false if the report has not been requested, or has not finished being serialized/written. 
+    - BBR will start automatically serializing a `byte[]` after `Game.SkirmishDebriefingLobbyController.Start()` finishes running. If this does not happen and you want the report as a `byte[]`, you can use `void BBRMod.BBRMod.ForceStartSerialization()` to manually initiate the process.
+    - `byte[] BBRMod.BBRMod.GetReportBytes()` will return the `byte[]` containing the compressed binary .bbr file in memory if you wish to do something with it like sending it to another server before writing. If called when a report is not ready or while the Recorder is still running it will warn you as such and return an empty array.
+    - `void BBRMod.BBRMod.ForceHaltSerialization()` will immediately halt any data serialization/writing and clear all data.
 
 # Things Wot BBR D'ain't
   - BBR is not a game. It does not have game logic. It doesn't care about collisions, or that a missile and a ship are different things, it is just a visualization tool for recorded data. A video player doesn't care what the content of the video is, it just displays it. BBR is the same: it displays the data without doing any sort of interpretation.
